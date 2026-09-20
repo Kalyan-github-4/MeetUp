@@ -6,7 +6,6 @@ import {
   useSyncExternalStore,
   type ReactNode,
 } from "react"
-import dynamic from "next/dynamic"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@clerk/nextjs"
 
@@ -17,6 +16,7 @@ import {
   type MediaPrefs,
 } from "@/lib/media-prefs"
 import { DevicePreview } from "@/components/meeting/device-preview"
+import { ModelAvatar } from "@/components/meeting/model-avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -24,21 +24,6 @@ import {
   saveParticipant,
   subscribeToSeat,
 } from "@/lib/meeting-seat"
-
-/**
- * three.js is a large dependency and WebGL cannot render on the server, so the
- * studio is fetched only once someone is actually looking at this screen — it
- * never reaches the bundle for a returning participant who goes straight in.
- */
-const ModelStudio = dynamic(
-  () => import("@/components/meeting/model-studio").then((m) => m.ModelStudio),
-  {
-    ssr: false,
-    loading: () => (
-      <div aria-hidden className="size-full animate-pulse bg-ink/5" />
-    ),
-  },
-)
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000"
 
@@ -183,7 +168,12 @@ export function PreJoin({
             prefs={media}
             onChange={changeMedia}
             fallback={
-              <ModelStudio index={avatar} className="absolute inset-0 size-full" />
+              <ModelAvatar
+                id={code}
+                name={name.trim() || "You"}
+                index={avatar}
+                className="absolute inset-0 size-full"
+              />
             }
             footer={
               <div className="flex items-center justify-between border-t border-hairline px-3 py-2">
