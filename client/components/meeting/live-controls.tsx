@@ -27,6 +27,27 @@ import { Icon } from "@/components/ui/icon"
 
 export type RoomLayoutMode = "spotlight" | "grid"
 
+/** Why a device would not start, in words worth showing in the room. */
+function describeDeviceError(
+  error: unknown,
+  kind: "mic" | "camera" | "screen",
+): string {
+  const device =
+    kind === "mic" ? "microphone" : kind === "camera" ? "camera" : "screen"
+  const name = error instanceof DOMException ? error.name : ""
+
+  if (name === "NotAllowedError") {
+    return `Your ${device} is blocked. Allow it from the icon in the address bar, then try again.`
+  }
+  if (name === "NotFoundError" || name === "OverconstrainedError") {
+    return `No ${device} was found.`
+  }
+  if (name === "NotReadableError") {
+    return `Your ${device} is in use by another app.`
+  }
+  return `Could not turn your ${device} back on.`
+}
+
 /**
  * One control. Filled when the device is live, hairline when it is not, so the
  * state of the room is legible without reading a single label.
@@ -165,6 +186,7 @@ export function LiveControls({
   } = useLocalParticipant()
   const router = useRouter()
   const [busy, setBusy] = useState(false)
+  const [deviceError, setDeviceError] = useState<string | null>(null)
   const [settingsOpen, setSettingsOpen] = useState(false)
   // Ending the call for everyone is the one action here that cannot be taken
   // back, so it asks twice. The question withdraws itself after a few seconds.
@@ -179,17 +201,30 @@ export function LiveControls({
 
   async function toggle(kind: "mic" | "camera" | "screen") {
     setBusy(true)
+    setDeviceError(null)
     try {
+      // The target is read from the participant, not from the rendered flag:
+      // a mute can arrive from the host while this bar is on screen, and
+      // acting on a stale flag would ask for the state the device is already
+      // in — a click that does nothing, which is what leaves someone stuck
+      // muted.
       if (kind === "mic") {
-        await localParticipant.setMicrophoneEnabled(!isMicrophoneEnabled)
+        await localParticipant.setMicrophoneEnabled(
+          !localParticipant.isMicrophoneEnabled,
+        )
       } else if (kind === "camera") {
-        await localParticipant.setCameraEnabled(!isCameraEnabled)
+        await localParticipant.setCameraEnabled(
+          !localParticipant.isCameraEnabled,
+        )
       } else {
-        await localParticipant.setScreenShareEnabled(!isScreenShareEnabled)
+        await localParticipant.setScreenShareEnabled(
+          !localParticipant.isScreenShareEnabled,
+        )
       }
     } catch (error) {
-      // Most often a denied permission prompt — nothing to recover, but the
-      // console should say why the button did not change.
+      // Most often a denied permission prompt, or a device another app has
+      // taken. Saying so beats a button that silently refuses to move.
+      setDeviceError(describeDeviceError(error, kind))
       console.error(`Could not toggle ${kind}`, error)
     } finally {
       setBusy(false)
@@ -296,12 +331,12 @@ export function LiveControls({
           Leave
         </button>
       </div>
-      {endError ? (
+      {endError || deviceError ? (
         <p
           role="alert"
-          className="absolute bottom-full mb-2 rounded-full bg-canvas px-3 py-1 text-xs text-ember"
+          className="absolute bottom-full mb-2 max-w-[calc(100%-1.5rem)] rounded-full bg-canvas px-3 py-1 text-center text-xs text-ember"
         >
-          {endError}
+          {endError ?? deviceError}
         </p>
       ) : null}
     </div>

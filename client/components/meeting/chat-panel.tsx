@@ -8,7 +8,6 @@ import {
   useParticipants,
 } from "@livekit/components-react"
 import {
-  MicOff01Icon,
   SentIcon,
   SmileIcon,
   UserRemove01Icon,
@@ -97,18 +96,14 @@ function Message({
 }
 
 /**
- * The host's mute and remove buttons beside one person. Removing asks twice —
- * it disconnects them — and the question withdraws itself after a few seconds.
+ * The host's remove button beside one person. Removing asks twice — it
+ * disconnects them — and the question withdraws itself after a few seconds.
+ *
+ * There is deliberately no control over anyone's microphone: a mic belongs to
+ * the person sitting behind it, and a host who could silence one without
+ * asking could just as easily open one.
  */
-function HostActions({
-  id,
-  name,
-  micOn,
-}: {
-  id: string
-  name: string
-  micOn: boolean
-}) {
+function HostActions({ id, name }: { id: string; name: string }) {
   const { moderate } = useHostControls()
   const [busy, setBusy] = useState(false)
   const [confirming, setConfirming] = useState(false)
@@ -120,8 +115,8 @@ function HostActions({
     return () => window.clearTimeout(timer)
   }, [confirming])
 
-  async function act(action: "mute" | "remove") {
-    if (action === "remove" && !confirming) {
+  async function act(action: "remove") {
+    if (!confirming) {
       setConfirming(true)
       return
     }
@@ -143,18 +138,6 @@ function HostActions({
         <span role="alert" className="max-w-28 truncate text-xs text-ember" title={error}>
           {error}
         </span>
-      ) : null}
-      {micOn ? (
-        <button
-          type="button"
-          onClick={() => void act("mute")}
-          disabled={busy}
-          aria-label={`Mute ${name}`}
-          title={`Mute ${name}`}
-          className="flex size-8 items-center justify-center rounded-full border border-hairline transition-colors hover:border-ink disabled:opacity-40"
-        >
-          <Icon icon={MicOff01Icon} size={14} strokeWidth={1.8} />
-        </button>
       ) : null}
       <button
         type="button"
@@ -400,11 +383,7 @@ export function ChatPanel({
                   </span>
                 </span>
                 {isHost && !participant.isLocal ? (
-                  <HostActions
-                    id={participant.id}
-                    name={participant.name}
-                    micOn={participant.micOn}
-                  />
+                  <HostActions id={participant.id} name={participant.name} />
                 ) : null}
               </li>
             ))}

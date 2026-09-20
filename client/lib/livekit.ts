@@ -122,7 +122,7 @@ export async function fetchWaiting(
   return participants
 }
 
-export type ModerationAction = "admit" | "deny" | "mute" | "remove"
+export type ModerationAction = "admit" | "deny" | "remove"
 
 /** One host action on one seat. `participantId` is the LiveKit identity. */
 export async function moderateParticipant(

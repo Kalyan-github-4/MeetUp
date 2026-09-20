@@ -2,7 +2,6 @@ import {
   AccessToken,
   RoomServiceClient,
   ServerError,
-  TrackSource,
 } from "livekit-server-sdk";
 
 import { env } from "../config/env.ts";
@@ -82,26 +81,3 @@ export async function removeFromRoom(room: string, identity: string): Promise<vo
   }
 }
 
-/**
- * Mutes someone's microphone. Returns false when there was nothing to mute.
- *
- * Muting only: turning a mic back on stays with its owner, the same courtesy
- * every mainstream call app extends.
- */
-export async function muteMicrophone(room: string, identity: string): Promise<boolean> {
-  let participant;
-  try {
-    participant = await rooms.getParticipant(room, identity);
-  } catch (error) {
-    if (isNotFound(error)) return false;
-    throw error;
-  }
-
-  const mic = participant.tracks.find(
-    (track) => track.source === TrackSource.MICROPHONE && !track.muted,
-  );
-  if (!mic) return false;
-
-  await rooms.mutePublishedTrack(room, identity, mic.sid, true);
-  return true;
-}

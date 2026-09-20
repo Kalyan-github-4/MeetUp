@@ -7,7 +7,6 @@ import { issueGuestToken } from "../services/guest.ts";
 import {
   closeRoom,
   createMeetingToken,
-  muteMicrophone,
   removeFromRoom,
 } from "../services/livekit.ts";
 import {
@@ -58,7 +57,7 @@ const codeParams = z.object({
 
 const participantParams = codeParams.extend({
   participantId: z.string().uuid(),
-  action: z.enum(["admit", "deny", "mute", "remove"]),
+  action: z.enum(["admit", "deny", "remove"]),
 });
 
 const messageBody = z.object({
@@ -467,7 +466,10 @@ export async function meetingRoutes(app: FastifyInstance): Promise<void> {
 
   /**
    * The host's controls over one seat: let in or turn away someone waiting,
-   * and mute or remove someone in the call.
+   * and remove someone from the call.
+   *
+   * There is no control over a microphone here: a mic belongs to the person
+   * sitting behind it.
    */
   app.post(
     "/meetings/:code/participants/:participantId/:action",
@@ -505,11 +507,6 @@ export async function meetingRoutes(app: FastifyInstance): Promise<void> {
 
       if (target.status !== "admitted") {
         return reply.code(409).send({ error: "That person is not in the call" });
-      }
-
-      if (action === "mute") {
-        await muteMicrophone(session.livekitRoom, target.id);
-        return reply.code(204).send();
       }
 
       // Recorded before the disconnect, so the removed browser's attempt to
