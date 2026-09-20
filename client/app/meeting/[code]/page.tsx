@@ -42,11 +42,12 @@ export default async function MeetingRoomPage({
 
   // The summary and task panel is out until Phase 6 gives it something real to
   // show — `summary-panel.tsx` is still there, waiting to be handed live data.
-  // Below `lg` the room is not height-constrained, so the panel is given an
-  // explicit height of its own — otherwise the message list grows the page
-  // instead of scrolling inside itself.
+  // The panel carries its own height rather than inheriting one from the room
+  // around it. Nothing arriving in the chat can then grow the page or move
+  // anything else: the message list scrolls inside a box of fixed size.
+  // On `lg` that box is the viewport less the room's padding.
   const sidePanels = (
-    <ChatPanel code={code} className="h-[70vh] min-h-96 lg:h-auto lg:flex-1" />
+    <ChatPanel code={code} className="h-[70vh] lg:h-[calc(100dvh-2.5rem)]" />
   )
 
   return (

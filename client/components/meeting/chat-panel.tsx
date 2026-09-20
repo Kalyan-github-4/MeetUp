@@ -297,7 +297,10 @@ export function ChatPanel({
     <section
       aria-label="Room chat"
       className={cn(
-        "flex flex-col rounded-2xl border border-hairline p-4",
+        // `overflow-hidden` is the backstop: whatever the panel is given for a
+        // height, its contents scroll within it rather than spilling out and
+        // pushing the page down.
+        "flex min-h-0 flex-col overflow-hidden rounded-2xl border border-hairline p-4",
         className,
       )}
     >

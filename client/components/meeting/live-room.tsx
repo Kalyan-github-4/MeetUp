@@ -313,8 +313,11 @@ function RoomLayout({
     />
   )
 
+  // `lg:basis-auto` below is what lets `lg:h-dvh` take effect: the room is a
+  // flex item of the column in `body`, and a `flex-1` basis of 0 would
+  // otherwise override the height and let the room grow with its content.
   return (
-    <div className="flex flex-1 flex-col gap-5 bg-canvas p-5 text-ink lg:h-dvh lg:flex-row lg:overflow-hidden">
+    <div className="flex flex-1 flex-col gap-5 bg-canvas p-5 text-ink lg:h-dvh lg:basis-auto lg:flex-row lg:overflow-hidden">
       <div className="flex min-w-0 flex-1 flex-col gap-4">
         <MeetingHeader title={title} subtitle={subtitle} code={code} />
 
