@@ -4,6 +4,8 @@ import { UserButton } from "@clerk/nextjs"
 import { auth } from "@clerk/nextjs/server"
 
 import { apiFetch } from "@/lib/api"
+import { meetingPath } from "@/lib/meeting-url"
+import { CopyLinkButton } from "@/components/meeting/share-link"
 import { CreateMeetingForm } from "@/app/(app)/dashboard/create-meeting-form"
 
 export const metadata: Metadata = {
@@ -55,28 +57,36 @@ export default async function DashboardPage() {
       ) : (
         <ul className="flex flex-col gap-2">
           {meetings.map((meeting) => (
-            <li key={meeting.id}>
-              <Link
-                href={`/meeting/${meeting.code}`}
-                className="flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-muted"
-              >
-                <span className="min-w-0">
-                  <span className="block truncate font-medium">
-                    {meeting.title}
-                  </span>
-                  <span className="block font-mono text-xs text-muted-foreground">
-                    {meeting.code}
-                  </span>
+            <li
+              key={meeting.id}
+              className="flex items-center gap-3 rounded-lg border p-4 transition-colors hover:bg-muted"
+            >
+              {/* Only the title is the link: the copy button beside it is a
+                  control of its own, and a button inside a link is neither. */}
+              <Link href={meetingPath(meeting.code)} className="min-w-0 flex-1">
+                <span className="block truncate font-medium">
+                  {meeting.title}
                 </span>
-
-                <span
-                  className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                    statusStyles[meeting.status] ?? statusStyles.ended
-                  }`}
-                >
-                  {meeting.status}
+                <span className="block text-xs text-muted-foreground">
+                  {meeting.status === "ended"
+                    ? "Ended"
+                    : "Open to anyone with the link"}
                 </span>
               </Link>
+
+              <span
+                className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${
+                  statusStyles[meeting.status] ?? statusStyles.ended
+                }`}
+              >
+                {meeting.status}
+              </span>
+
+              {/* An ended meeting cannot be rejoined, so there is nothing
+                  useful left to hand anyone. */}
+              {meeting.status === "ended" ? null : (
+                <CopyLinkButton code={meeting.code} className="shrink-0" />
+              )}
             </li>
           ))}
         </ul>

@@ -2,6 +2,7 @@ import Link from "next/link"
 import { ArrowLeft01Icon } from "@hugeicons/core-free-icons"
 import { cn } from "cn"
 
+import { CopyLinkButton } from "@/components/meeting/share-link"
 import { Icon } from "@/components/ui/icon"
 
 type MeetingHeaderProps = {
@@ -49,9 +50,9 @@ export function MeetingHeader({
           Live
         </span>
 
-        <span className="hidden rounded-full border border-hairline px-3 py-1.5 font-mono text-xs tracking-widest sm:inline-block">
-          {code}
-        </span>
+        {/* The code, which hands over the shareable link — someone already in
+            the call is the one person who needs to invite the next. */}
+        <CopyLinkButton code={code} className="hidden sm:flex" />
       </div>
     </header>
   )
