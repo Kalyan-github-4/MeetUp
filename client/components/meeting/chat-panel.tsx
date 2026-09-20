@@ -380,7 +380,7 @@ export function ChatPanel({
           </form>
         </TabsContent>
 
-        <TabsContent value="participants">
+        <TabsContent value="participants" className="min-h-0 overflow-y-auto">
           <ul className="flex flex-col gap-3">
             {roster.map((participant) => (
               <li key={participant.id} className="flex items-center gap-2.5">

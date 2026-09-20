@@ -42,7 +42,12 @@ export default async function MeetingRoomPage({
 
   // The summary and task panel is out until Phase 6 gives it something real to
   // show — `summary-panel.tsx` is still there, waiting to be handed live data.
-  const sidePanels = <ChatPanel code={code} className="min-h-96 flex-1" />
+  // Below `lg` the room is not height-constrained, so the panel is given an
+  // explicit height of its own — otherwise the message list grows the page
+  // instead of scrolling inside itself.
+  const sidePanels = (
+    <ChatPanel code={code} className="h-[70vh] min-h-96 lg:h-auto lg:flex-1" />
+  )
 
   return (
     <PreJoin
