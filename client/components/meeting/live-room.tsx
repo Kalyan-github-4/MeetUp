@@ -26,7 +26,6 @@ import {
   type RoomOptions,
 } from "livekit-client"
 
-import { AVATAR_ATTRIBUTE, parseAvatarAttribute } from "@/lib/avatars"
 import { HostControlsContext, useHostControls, type HostControls } from "@/lib/host-controls"
 import {
   endMeetingForAll,
@@ -80,7 +79,6 @@ function useTiles(): { stage: Tile | null; strip: Tile[]; grid: Tile[] } {
     isLocal: p.isLocal,
     micOn: p.isMicrophoneEnabled,
     isSpeaking: p.isSpeaking,
-    avatar: parseAvatarAttribute(p.attributes?.[AVATAR_ATTRIBUTE]),
     video: cameraFor(p.identity),
   }))
 
@@ -95,7 +93,6 @@ function useTiles(): { stage: Tile | null; strip: Tile[]; grid: Tile[] } {
       isLocal: screenShare.participant.isLocal,
       micOn: owner?.micOn ?? false,
       isSpeaking: false,
-      avatar: owner?.avatar ?? null,
       video: screenShare,
       isScreen: true,
     }
@@ -111,30 +108,6 @@ function useTiles(): { stage: Tile | null; strip: Tile[]; grid: Tile[] } {
     strip: tiles.filter((t) => t.id !== stage?.id),
     grid: tiles,
   }
-}
-
-/**
- * Publishes the figure this browser picked, once, on connect.
- *
- * The choice lives in the seat rather than on the server, so this is what
- * carries it to everyone else — without it the room would fall back to the
- * id-derived default and nobody would see what the picker chose.
- */
-function AvatarAnnouncer({ code }: { code: string }) {
-  const { localParticipant } = useLocalParticipant()
-
-  useEffect(() => {
-    const chosen = readParticipant(code)?.avatar
-    if (chosen === undefined) return
-
-    localParticipant
-      .setAttributes({ [AVATAR_ATTRIBUTE]: String(chosen) })
-      .catch(() => {
-        // Cosmetic: everyone still sees a figure, just the default one.
-      })
-  }, [code, localParticipant])
-
-  return null
 }
 
 /**
@@ -245,7 +218,6 @@ function WaitingRoomRequests({ code }: { code: string }) {
       {waiting.map((p) => (
         <JoinRequest
           key={p.id}
-          id={p.id}
           name={p.displayName}
           busy={busy === p.id}
           onAdmit={() => void answer(p.id, "admit")}
@@ -273,8 +245,6 @@ function readLayout(): RoomLayoutMode {
 
 function RoomLayout({
   code,
-  title,
-  subtitle,
   sidePanels,
   isHost,
   onLeave,
@@ -282,8 +252,6 @@ function RoomLayout({
   onMediaChange,
 }: {
   code: string
-  title: string
-  subtitle: string
   sidePanels: ReactNode
   isHost: boolean
   onLeave: () => void
@@ -319,7 +287,7 @@ function RoomLayout({
   return (
     <div className="flex flex-1 flex-col gap-5 bg-canvas p-5 text-ink lg:h-dvh lg:basis-auto lg:flex-row lg:overflow-hidden">
       <div className="flex min-w-0 flex-1 flex-col gap-4">
-        <MeetingHeader title={title} subtitle={subtitle} code={code} />
+        <MeetingHeader code={code} />
 
         <ReconnectingBanner />
         {isHost ? <WaitingRoomRequests code={code} /> : null}
@@ -344,7 +312,6 @@ function RoomLayout({
         {sidePanels}
       </aside>
 
-      <AvatarAnnouncer code={code} />
       <MediaStateTracker onChange={onMediaChange} />
       {/* Plays every remote audio track; without it the room is silent. */}
       <RoomAudioRenderer />
@@ -418,13 +385,9 @@ const secondaryButton =
 
 export function LiveMeetingRoom({
   code,
-  title,
-  subtitle,
   sidePanels,
 }: {
   code: string
-  title: string
-  subtitle: string
   sidePanels: ReactNode
 }) {
   const router = useRouter()
@@ -779,8 +742,6 @@ export function LiveMeetingRoom({
       >
         <RoomLayout
           code={code}
-          title={title}
-          subtitle={subtitle}
           sidePanels={sidePanels}
           isHost={isHost}
           onLeave={handleLeave}

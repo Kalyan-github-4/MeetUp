@@ -11,7 +11,6 @@ import { Copy01Icon, Tick02Icon } from "@hugeicons/core-free-icons"
 import { cn } from "cn"
 
 import { meetingPath, meetingUrl } from "@/lib/meeting-url"
-import { Button } from "@/components/ui/button"
 import { Icon } from "@/components/ui/icon"
 
 /** How long the confirmation stays up before the button offers to copy again. */
@@ -126,45 +125,46 @@ export function MeetingLinkField({
   }
 
   return (
-    <div className={className}>
-      <div className="flex items-center gap-2 rounded-xl border bg-background p-1.5 pl-3">
-        <input
-          ref={field}
-          readOnly
-          // Until the origin is known there is still something worth showing,
-          // and it is the part of the link that identifies the meeting.
-          value={url ?? meetingPath(code)}
-          aria-label="Meeting link"
-          onFocus={(event) => event.currentTarget.select()}
-          className="min-w-0 flex-1 truncate bg-transparent font-mono text-sm outline-none"
+    <div
+      className={cn(
+        "flex min-w-0 items-center gap-2 rounded-full border border-hairline py-1 pr-1 pl-4",
+        className,
+      )}
+    >
+      <input
+        ref={field}
+        readOnly
+        // Until the origin is known there is still something worth showing,
+        // and it is the part of the link that identifies the meeting.
+        value={url ?? meetingPath(code)}
+        aria-label="Meeting link"
+        onFocus={(event) => event.currentTarget.select()}
+        className="min-w-0 flex-1 truncate bg-transparent font-mono text-sm text-ink outline-none"
+      />
+
+      <button
+        type="button"
+        onClick={onCopy}
+        disabled={!url}
+        className="flex h-8 shrink-0 items-center gap-1.5 rounded-full bg-ink px-3.5 text-sm font-medium text-canvas transition-opacity hover:opacity-85 disabled:opacity-50"
+      >
+        <Icon
+          icon={state === "copied" ? Tick02Icon : Copy01Icon}
+          size={15}
+          strokeWidth={2}
         />
+        {/* On failure the link is already selected, so the label says what
+            to do with it. */}
+        {state === "copied"
+          ? "Copied"
+          : state === "failed"
+            ? "Press Ctrl+C"
+            : "Copy link"}
+      </button>
 
-        <Button
-          type="button"
-          onClick={onCopy}
-          disabled={!url}
-          aria-live="polite"
-          className="shrink-0"
-        >
-          <Icon
-            icon={state === "copied" ? Tick02Icon : Copy01Icon}
-            size={16}
-            strokeWidth={2}
-            data-icon="inline-start"
-          />
-          {state === "copied" ? "Copied" : "Copy link"}
-        </Button>
-      </div>
-
-      {state === "failed" ? (
-        <p role="alert" className="mt-2 text-xs text-muted-foreground">
-          Couldn’t reach the clipboard — the link is selected, press
-          {" "}
-          <kbd className="font-mono">Ctrl</kbd>/
-          <kbd className="font-mono">⌘</kbd>+<kbd className="font-mono">C</kbd>
-          {" "}to copy it.
-        </p>
-      ) : null}
+      <span className="sr-only" aria-live="polite">
+        {state === "copied" ? "Link copied" : ""}
+      </span>
     </div>
   )
 }

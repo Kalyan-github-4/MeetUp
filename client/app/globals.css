@@ -145,51 +145,6 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
-/* The idle lift that keeps a camera-off tile from reading as a frozen image.
-   Units are SVG user units, so the travel scales with the tile. */
-@keyframes avatar-float {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-3.5px);
-  }
-}
-
-/* Shut for a sixth of a second, once every few seconds. The long flat stretch
-   is the point — a blink is noticed only by its absence. */
-@keyframes avatar-blink {
-  0%,
-  92%,
-  100% {
-    transform: scaleY(1);
-  }
-  95% {
-    transform: scaleY(0.08);
-  }
-  98% {
-    transform: scaleY(1);
-  }
-}
-
-/* Only for those who have not asked for stillness — a roomful of drifting,
-   blinking figures is exactly the kind of ambient motion the preference
-   exists for. */
-@media (prefers-reduced-motion: no-preference) {
-  .avatar-float {
-    animation: avatar-float 7s ease-in-out infinite;
-  }
-
-  .avatar-blink {
-    /* Resolves transform-origin against the viewBox, so the lids close onto
-       the eye rather than onto the corner of the drawing. */
-    transform-box: view-box;
-    transform-origin: 80px 60px;
-    animation: avatar-blink 5.2s ease-in-out infinite;
-  }
-}
-
 @layer base {
   * {
     @apply border-border outline-ring/50;

@@ -57,14 +57,7 @@ export default async function MeetingRoomPage({
       hostName={meeting.host.name}
       signedInName={signedInName}
     >
-      <LiveMeetingRoom
-        code={code}
-        title={meeting.title}
-        subtitle={
-          meeting.host.name ? `${meeting.host.name}'s meeting` : "MeetUp meeting"
-        }
-        sidePanels={sidePanels}
-      />
+      <LiveMeetingRoom code={code} sidePanels={sidePanels} />
     </PreJoin>
   )
 }

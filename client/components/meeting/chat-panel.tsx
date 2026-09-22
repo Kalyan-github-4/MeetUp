@@ -14,7 +14,6 @@ import {
 } from "@hugeicons/core-free-icons"
 import { cn } from "cn"
 
-import { AVATAR_ATTRIBUTE, parseAvatarAttribute } from "@/lib/avatars"
 import {
   CHAT_TOPIC,
   decodeChat,
@@ -26,11 +25,14 @@ import {
 } from "@/lib/chat"
 import { useHostControls } from "@/lib/host-controls"
 import { readParticipant } from "@/lib/meeting-seat"
-import { ModelAvatar } from "@/components/meeting/model-avatar"
+import { EmojiPicker } from "@/components/meeting/emoji-picker"
+import { InitialsAvatar } from "@/components/meeting/initials-avatar"
 import { Button } from "@/components/ui/button"
 import { Icon } from "@/components/ui/icon"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+
+const MAX_MESSAGE_LENGTH = 2000
 
 const triggerClassName =
   "rounded-full border-transparent px-3.5 text-ink-muted data-active:bg-ink data-active:text-canvas"
@@ -54,20 +56,15 @@ function mergeMessage(
 function Message({
   message,
   isSelf,
-  avatar,
 }: {
   message: ChatEnvelope
   isSelf: boolean
-  /** Null once the author has left — their figure falls back to the default. */
-  avatar: number | null
 }) {
   return (
     <li className={cn("flex items-end gap-2", isSelf && "flex-row-reverse")}>
-      <ModelAvatar
-        id={message.authorId}
+      <InitialsAvatar
         name={message.authorName}
-        index={avatar ?? undefined}
-        className="mb-0.5 size-8 shrink-0 overflow-hidden rounded-full"
+        className="mb-0.5 size-8 shrink-0 rounded-full"
       />
 
       <div
@@ -180,7 +177,43 @@ export function ChatPanel({
   const [messages, setMessages] = useState<ChatEnvelope[]>([])
   const [draft, setDraft] = useState("")
   const [error, setError] = useState<string | null>(null)
+  const [pickerOpen, setPickerOpen] = useState(false)
   const listRef = useRef<HTMLUListElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
+  const emojiButtonRef = useRef<HTMLButtonElement>(null)
+  /** Where the caret goes once the draft with the new emoji has rendered. */
+  const pendingCaret = useRef<number | null>(null)
+
+  const closePicker = useCallback(() => setPickerOpen(false), [])
+
+  // Put the caret back after the inserted emoji: setting the value from state
+  // would otherwise leave it at the end of the input.
+  useEffect(() => {
+    const input = inputRef.current
+    const caret = pendingCaret.current
+    if (!input || caret === null) return
+    pendingCaret.current = null
+    input.focus()
+    input.setSelectionRange(caret, caret)
+  }, [draft])
+
+  const insertEmoji = useCallback(
+    (emoji: string) => {
+      const input = inputRef.current
+      // The input keeps its selection while the picker has focus, so this is
+      // still where the person was typing.
+      const start = input?.selectionStart ?? draft.length
+      const end = input?.selectionEnd ?? draft.length
+      const next = draft.slice(0, start) + emoji + draft.slice(end)
+
+      setPickerOpen(false)
+      if (next.length > MAX_MESSAGE_LENGTH) return
+
+      pendingCaret.current = start + emoji.length
+      setDraft(next)
+    },
+    [draft],
+  )
 
   const receive = useCallback((payload: Uint8Array) => {
     const message = decodeChat(payload)
@@ -245,6 +278,7 @@ export function ChatPanel({
       }
 
       setDraft("")
+      setPickerOpen(false)
       setError(null)
       // The data channel does not echo a frame back to its sender.
       setMessages((current) => mergeMessage(current, message))
@@ -278,19 +312,8 @@ export function ChatPanel({
         name: participant.name || "Guest",
         isLocal: participant.isLocal,
         micOn: participant.isMicrophoneEnabled,
-        avatar: parseAvatarAttribute(
-          participant.attributes?.[AVATAR_ATTRIBUTE],
-        ),
       })),
     [participants],
-  )
-
-  // Authors of backlog messages may have left, so this resolves what it can
-  // and lets the rest fall back.
-  const avatarFor = useCallback(
-    (authorId: string) =>
-      roster.find((participant) => participant.id === authorId)?.avatar ?? null,
-    [roster],
   )
 
   return (
@@ -329,7 +352,6 @@ export function ChatPanel({
                   key={message.id}
                   message={message}
                   isSelf={message.authorId === localParticipant.identity}
-                  avatar={avatarFor(message.authorId)}
                 />
               ))
             )}
@@ -342,16 +364,37 @@ export function ChatPanel({
           ) : null}
 
           <form onSubmit={handleSubmit} className="relative shrink-0">
-            <span className="absolute top-1/2 left-3 -translate-y-1/2 text-ink-muted">
+            {pickerOpen ? (
+              <EmojiPicker
+                onSelect={insertEmoji}
+                onClose={closePicker}
+                toggleRef={emojiButtonRef}
+                className="absolute inset-x-0 bottom-full mb-2"
+              />
+            ) : null}
+
+            <button
+              ref={emojiButtonRef}
+              type="button"
+              onClick={() => setPickerOpen((open) => !open)}
+              aria-label={pickerOpen ? "Close emoji picker" : "Add emoji"}
+              aria-expanded={pickerOpen}
+              aria-haspopup="dialog"
+              className={cn(
+                "absolute top-1/2 left-1.5 z-10 flex size-8 -translate-y-1/2 items-center justify-center rounded-full transition-colors hover:bg-ink/5 hover:text-ink",
+                pickerOpen ? "bg-ink/8 text-ink" : "text-ink-muted",
+              )}
+            >
               <Icon icon={SmileIcon} size={17} strokeWidth={1.8} />
-            </span>
+            </button>
             <Input
+              ref={inputRef}
               type="text"
               value={draft}
               onChange={(event) => setDraft(event.target.value)}
               placeholder="Type something..."
               aria-label="Message"
-              maxLength={2000}
+              maxLength={MAX_MESSAGE_LENGTH}
               className="h-11 rounded-full border-hairline bg-transparent pr-12 pl-10"
             />
             <Button
@@ -370,11 +413,9 @@ export function ChatPanel({
           <ul className="flex flex-col gap-3">
             {roster.map((participant) => (
               <li key={participant.id} className="flex items-center gap-2.5">
-                <ModelAvatar
-                  id={participant.id}
+                <InitialsAvatar
                   name={participant.name}
-                  index={participant.avatar ?? undefined}
-                  className="size-8 shrink-0 overflow-hidden rounded-full"
+                  className="size-8 shrink-0 rounded-full"
                 />
                 <span className="min-w-0">
                   <span className="block truncate text-sm">

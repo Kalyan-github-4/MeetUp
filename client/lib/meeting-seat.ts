@@ -10,9 +10,6 @@ export type StoredParticipant = {
   participantId: string
   displayName: string
   guestToken: string | null
-  /** The figure chosen on the pre-join screen. Absent for seats taken before
-   *  the picker existed, which fall back to the id-derived default. */
-  avatar?: number
 }
 
 function storageKey(code: string): string {

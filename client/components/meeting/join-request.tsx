@@ -3,17 +3,15 @@
 import { Cancel01Icon, Tick02Icon } from "@hugeicons/core-free-icons"
 
 import { Icon } from "@/components/ui/icon"
-import { ModelAvatar } from "@/components/meeting/model-avatar"
+import { InitialsAvatar } from "@/components/meeting/initials-avatar"
 
 /** One knock at the door, with the host's two answers. */
 export function JoinRequest({
-  id,
   name,
   busy,
   onAdmit,
   onDeny,
 }: {
-  id: string
   name: string
   busy: boolean
   onAdmit: () => void
@@ -21,11 +19,7 @@ export function JoinRequest({
 }) {
   return (
     <div className="flex items-center gap-3 rounded-full border border-hairline bg-canvas py-1.5 pr-1.5 pl-1.5">
-      <ModelAvatar
-        id={id}
-        name={name}
-        className="size-8 shrink-0 overflow-hidden rounded-full"
-      />
+      <InitialsAvatar name={name} className="size-8 shrink-0 rounded-full" />
       <p className="min-w-0 flex-1 truncate text-sm">
         <span className="font-medium">{name}</span>
         <span className="text-ink-muted"> wants to join</span>

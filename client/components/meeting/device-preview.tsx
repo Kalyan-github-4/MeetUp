@@ -187,7 +187,7 @@ function Toggle({
 /**
  * The camera and microphone check before joining.
  *
- * Shows the camera when it is on and `fallback` (the stand-in figure) when it
+ * Shows the camera when it is on and `fallback` (their initials) when it
  * is off — the same thing everyone else will see. The streams opened here are
  * released on join; the room opens its own with the same choices.
  */

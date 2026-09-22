@@ -9,14 +9,13 @@ import {
 import { useRouter } from "next/navigation"
 import { useAuth } from "@clerk/nextjs"
 
-import { MODEL_COUNT } from "@/lib/avatars"
 import {
   readMediaPrefs,
   saveMediaPrefs,
   type MediaPrefs,
 } from "@/lib/media-prefs"
 import { DevicePreview } from "@/components/meeting/device-preview"
-import { ModelAvatar } from "@/components/meeting/model-avatar"
+import { InitialsAvatar } from "@/components/meeting/initials-avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -69,13 +68,7 @@ export function PreJoin({
   const [name, setName] = useState(signedInName ?? "")
   const [pending, setPending] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  // Opens on an arbitrary figure so a room does not fill up with whoever is
-  // first in the list. Safe to randomise: this screen never renders on the
-  // server, so there is no markup to mismatch.
-  const [avatar, setAvatar] = useState(() =>
-    Math.floor(Math.random() * MODEL_COUNT),
-  )
-  // Read lazily for the same reason: this form only ever renders client-side.
+  // Read lazily: this form only ever renders client-side.
   const [media, setMedia] = useState<MediaPrefs>(readMediaPrefs)
 
   // Stable, because the preview reopens devices whenever it changes.
@@ -123,7 +116,6 @@ export function PreJoin({
         participantId: result.participant.id,
         displayName: result.participant.displayName,
         guestToken: result.guestToken,
-        avatar,
       })
       // Pull the participant list that now includes us.
       router.refresh()
@@ -168,45 +160,13 @@ export function PreJoin({
             prefs={media}
             onChange={changeMedia}
             fallback={
-              <ModelAvatar
-                id={code}
+              <InitialsAvatar
                 name={name.trim() || "You"}
-                index={avatar}
                 className="absolute inset-0 size-full"
               />
             }
-            footer={
-              <div className="flex items-center justify-between border-t border-hairline px-3 py-2">
-                <button
-                  type="button"
-                  onClick={() => setAvatar((current) => current - 1)}
-                  aria-label="Previous figure"
-                  className="flex size-8 items-center justify-center rounded-full border border-hairline text-sm transition-colors hover:border-ink"
-                >
-                  ‹
-                </button>
-
-                <p className="text-xs tracking-[0.18em] text-ink-muted uppercase">
-                  Stand-in {(((avatar % MODEL_COUNT) + MODEL_COUNT) % MODEL_COUNT) + 1}{" "}
-                  / {MODEL_COUNT}
-                </p>
-
-                <button
-                  type="button"
-                  onClick={() => setAvatar((current) => current + 1)}
-                  aria-label="Next figure"
-                  className="flex size-8 items-center justify-center rounded-full border border-hairline text-sm transition-colors hover:border-ink"
-                >
-                  ›
-                </button>
-              </div>
-            }
           />
         </div>
-
-        <p className="mt-2.5 text-xs text-ink-muted">
-          Your stand-in is shown to everyone whenever your camera is off.
-        </p>
 
         <label
           htmlFor="display-name"

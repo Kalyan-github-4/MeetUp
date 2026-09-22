@@ -5,7 +5,7 @@ import { Mic01Icon, MicOff01Icon } from "@hugeicons/core-free-icons"
 import { cn } from "cn"
 
 import { Icon } from "@/components/ui/icon"
-import { ModelAvatar } from "@/components/meeting/model-avatar"
+import { InitialsAvatar } from "@/components/meeting/initials-avatar"
 
 export type Tile = {
   /** Participant identity — the participant row id issued at join. */
@@ -14,9 +14,7 @@ export type Tile = {
   isLocal: boolean
   micOn: boolean
   isSpeaking: boolean
-  /** The stand-in they picked, or null to derive one from their id. */
-  avatar: number | null
-  /** Absent when the camera is off, so the tile falls back to their figure. */
+  /** Absent when the camera is off, so the tile falls back to their initials. */
   video: TrackReference | null
   /** A shared screen rather than a person. */
   isScreen?: boolean
@@ -25,12 +23,7 @@ export type Tile = {
 /** Stands in for the camera feed, filling the tile the way video would. */
 function CameraOff({ tile }: { tile: Tile }) {
   return (
-    <ModelAvatar
-      id={tile.id}
-      name={tile.name}
-      index={tile.avatar ?? undefined}
-      className="absolute inset-0 size-full object-cover"
-    />
+    <InitialsAvatar name={tile.name} className="absolute inset-0 size-full" />
   )
 }
 
@@ -108,7 +101,7 @@ export function LiveStage({
 }
 
 /**
- * One small tile: video or stand-in, name, mic state. Shared by the strip and
+ * One small tile: video or initials, name, mic state. Shared by the strip and
  * the grid so both read the same way.
  */
 function TileBody({ tile }: { tile: Tile }) {
